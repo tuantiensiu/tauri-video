@@ -1,16 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import {
+  BaseDirectory,
+  readTextFile,
+  writeTextFile,
+} from "@tauri-apps/plugin-fs";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
 
+  useEffect(() => {
+    createFile();
+    readFile();
+  }, []);
+
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name }));
   }
+
+  const createFile = async () => {
+    const contents = "Hello, World!";
+    await writeTextFile("test.txt", contents, {
+      baseDir: BaseDirectory.Document,
+    });
+    console.log("file created");
+  };
+  const readFile = async () => {
+    const file = await readTextFile("test.txt", {
+      baseDir: BaseDirectory.Document,
+    });
+    console.log("content: ", file);
+  };
 
   return (
     <main className="container">
