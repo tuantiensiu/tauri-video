@@ -1,40 +1,75 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+// import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
-import {
-  BaseDirectory,
-  readTextFile,
-  writeTextFile,
-} from "@tauri-apps/plugin-fs";
+// import {
+//   BaseDirectory,
+//   readTextFile,
+//   writeTextFile,
+// } from "@tauri-apps/plugin-fs";
+import videojs from "video.js";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
+  const [serviceWorker, setServiceWorker] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // useEffect(() => {
+  //   createFile();
+  //   readFile();
+  //   // registerServiceWorker();
+  // }, []);
 
   useEffect(() => {
-    createFile();
-    readFile();
-  }, []);
+    if (videoUrl) {
+      const player = videojs(videoRef.current!, {
+        controls: true,
+        responsive: true,
+        fluid: true,
+      });
+      console.log("videoUrl: ", videoUrl);
+
+      player.src({ type: "application/x-mpegURL", src: videoUrl });
+      return () => {
+        if (player) {
+          player.dispose(); // Clean up player instance on unmount
+        }
+      };
+    }
+  }, [videoUrl]);
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+    // setGreetMsg(await invoke("greet", { name }));
+    const config = await fetch(
+      "https://raw.githubusercontent.com/mdds-labs/vgm-release/main/config.json"
+    );
+    console.log("config: ", config);
   }
 
-  const createFile = async () => {
-    const contents = "Hello, World!";
-    await writeTextFile("test.txt", contents, {
-      baseDir: BaseDirectory.Document,
-    });
-    console.log("file created");
+  const playVideo = async () => {
+    // const urlPlay =
+    //   "http://playertest.longtailvideo.com/adaptive/wowzaid3/playlist.m3u8";
+    const urlPlay =
+      "https://cdn.vgm.tv/ipfs/bafybeie65uuexn4xu2v5a5ibyvyyw6elvyp2levkjixv264itxn5uvw7mq/playlist.m3u8";
+    setVideoUrl(urlPlay);
   };
-  const readFile = async () => {
-    const file = await readTextFile("test.txt", {
-      baseDir: BaseDirectory.Document,
-    });
-    console.log("content: ", file);
-  };
+
+  // const createFile = async () => {
+  //   const contents = "Hello, World!";
+  //   await writeTextFile("test.txt", contents, {
+  //     baseDir: BaseDirectory.Document,
+  //   });
+  //   console.log("file created");
+  // };
+  // const readFile = async () => {
+  //   const file = await readTextFile("test.txt", {
+  //     baseDir: BaseDirectory.Document,
+  //   });
+  //   console.log("content: ", file);
+  // };
 
   return (
     <main className="container">
@@ -68,6 +103,15 @@ function App() {
         <button type="submit">Greet</button>
       </form>
       <p>{greetMsg}</p>
+      {/* <button onClick={registerServiceWorker}>Check</button> */}
+      <hr></hr>
+      <button onClick={playVideo}>Play Video</button>
+      <p>{serviceWorker}</p>
+      {videoUrl && (
+        <div data-vjs-player>
+          <video ref={videoRef} className="video-js vjs-default-skin" />
+        </div>
+      )}
     </main>
   );
 }
